@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Postfix Expression Evaluator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+            color: #333;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 700px;
+            text-align: center;
+        }
+        h1 {
+            color: #ff4757;
+            margin-bottom: 20px;
+            font-size: 2em;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        .input-group {
+            margin: 20px 0;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #1e90ff;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #ff6b6b;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(45deg, #ff9f43, #ee5253);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: transform 0.2s, background 0.3s;
+        }
+        button:hover {
+            transform: scale(1.05);
+            background: linear-gradient(45deg, #ee5253, #ff9f43);
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border: 2px solid #dfe6e9;
+            border-radius: 8px;
+            min-height: 120px;
+            background: #f9f9f9;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        .error {
+            color: #d63031;
+            font-weight: bold;
+        }
+        .success {
+            color: #2d3436;
+            font-weight: bold;
+        }
+        .result-image {
+            margin-top: 15px;
+            max-width: 100px;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Postfix Expression Evaluator</h1>
+        <div class="input-group">
+            <input type="text" id="expression" placeholder="Enter postfix expression (e.g., 5 3 + 2 *)">
+            <button onclick="evaluateExpression()">Evaluate</button>
+        </div>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        class Stack {
+            constructor() {
+                this.items = [];
+            }
+            push(element) {
+                this.items.push(element);
+            }
+            pop() {
+                if (this.isEmpty()) return null;
+                return this.items.pop();
+            }
+            isEmpty() {
+                return this.items.length === 0;
+            }
+        }
+
+        function isOperator(char) {
+            return ['+', '-', '*', '/'].includes(char);
+        }
+
+        function evaluatePostfix(expression) {
+            const stack = new Stack();
+            const tokens = expression.trim().split(/\s+/);
+            let steps = [];
+
+            for (let token of tokens) {
+                if (!isNaN(token)) {
+                    stack.push(parseFloat(token));
+                    steps.push(`Push ${token} onto stack: [${stack.items.join(', ')}]`);
+                } else if (isOperator(token)) {
+                    if (stack.items.length < 2) {
+                        return { result: null, error: "Invalid expression: insufficient operands", steps };
+                    }
+                    const b = stack.pop();
+                    const a = stack.pop();
+                    let result;
+                    switch (token) {
+                        case '+':
+                            result = a + b;
+                            break;
+                        case '-':
+                            result = a - b;
+                            break;
+                        case '*':
+                            result = a * b;
+                            break;
+                        case '/':
+                            if (b === 0) {
+                                return { result: null, error: "Division by zero", steps };
+                            }
+                            result = a / b;
+                            break;
+                    }
+                    stack.push(result);
+                    steps.push(`Apply ${token} to ${a} and ${b}: ${a} ${token} ${b} = ${result}`);
+                    steps.push(`Push ${result} onto stack: [${stack.items.join(', ')}]`);
+                } else {
+                    return { result: null, error: `Invalid token: ${token}`, steps };
+                }
+            }
+
+            if (stack.items.length !== 1) {
+                return { result: null, error: "Invalid expression: too many operands", steps };
+            }
+
+            return { result: stack.pop(), error: null, steps };
+        }
+
+        function evaluateExpression() {
+            const expression = document.getElementById('expression').value;
+            const resultDiv = document.getElementById('result');
+            const { result, error, steps } = evaluatePostfix(expression);
+
+            if (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">Error: ${error}</div>
+                    <br>Steps:<br>${steps.join('<br>')}
+                    <br><img src="https://img.icons8.com/color/48/000000/error.png" alt="Error" class="result-image">
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="success">Result: ${result}</div>
+                    <br>Steps:<br>${steps.join('<br>')}
+                    <br><img src="https://img.icons8.com/color/48/000000/checked.png" alt="Success" class="result-image">
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
